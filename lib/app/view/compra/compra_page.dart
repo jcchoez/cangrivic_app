@@ -1,18 +1,18 @@
 import 'package:cangrivic/app/services/api_service_producto.dart';
-import 'package:cangrivic/app/services/api_service_venta.dart';
+import 'package:cangrivic/app/services/api_service_compra.dart';
 import 'package:flutter/material.dart';
 import 'package:http/io_client.dart';
 import '../../services/auto_firmado_temporal.dart';
 
-class VentaPage extends StatefulWidget {
-  final Map<String, dynamic> cliente;
-  VentaPage({required this.cliente});
+class CompraPage extends StatefulWidget {
+  final Map<String, dynamic> proveedor;
+  CompraPage({required this.proveedor});
 
   @override
-  _VentaPageState createState() => _VentaPageState();
+  _CompraPageState createState() => _CompraPageState();
 }
 
-class _VentaPageState extends State<VentaPage> {
+class _CompraPageState extends State<CompraPage> {
   final List<Map<String, dynamic>> _items = [];
   List<Map<String, dynamic>> _productos = [];
   Map<String, dynamic>? _productoSeleccionado;
@@ -20,10 +20,10 @@ class _VentaPageState extends State<VentaPage> {
   final TextEditingController _precioController = TextEditingController();
 
   bool _loadingProductos = true;
-  bool _guardandoVenta = false;
-  bool _ventaExitosa = false;
+  bool _guardandoCompra = false;
+  bool _compraExitosa = false;
   bool _mostrarNotificacion = false;
-  int? _ventaId;
+  int? _compraId;
 
   @override
   void initState() {
@@ -43,29 +43,17 @@ class _VentaPageState extends State<VentaPage> {
     } catch (e) {
       setState(() => _loadingProductos = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error al cargar productos: $e'),
-          backgroundColor: Colors.red,
-        ),
+        SnackBar(content: Text('Error al cargar productos: $e'), backgroundColor: Colors.red),
       );
     }
   }
 
-  double get _total {
-    return _items.fold(0, (sum, item) => sum + item['subtotal']);
-  }
+  double get _total => _items.fold(0, (sum, item) => sum + item['subtotal']);
 
   void _mostrarNotificacionCentrada() {
-    setState(() {
-      _mostrarNotificacion = true;
-    });
-
+    setState(() => _mostrarNotificacion = true);
     Future.delayed(Duration(seconds: 2), () {
-      if (mounted) {
-        setState(() {
-          _mostrarNotificacion = false;
-        });
-      }
+      if (mounted) setState(() => _mostrarNotificacion = false);
     });
   }
 
@@ -73,31 +61,22 @@ class _VentaPageState extends State<VentaPage> {
     if (_productoSeleccionado != null &&
         _cantidadController.text.isNotEmpty &&
         _precioController.text.isNotEmpty) {
-
       final cantidad = int.tryParse(_cantidadController.text);
       if (cantidad == null || cantidad <= 0) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
             content: Text("Ingrese una cantidad válida"),
-            backgroundColor: Colors.orange,
-          ),
-        );
+            backgroundColor: Colors.orange));
         return;
       }
-
       final precio = double.tryParse(_precioController.text);
       if (precio == null || precio <= 0) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
             content: Text("Ingrese un precio válido"),
-            backgroundColor: Colors.orange,
-          ),
-        );
+            backgroundColor: Colors.orange));
         return;
       }
 
       final double subtotal = cantidad * precio;
-
       setState(() {
         _items.add({
           "producto": _productoSeleccionado!['nombre'],
@@ -107,102 +86,82 @@ class _VentaPageState extends State<VentaPage> {
           "subtotal": subtotal,
         });
       });
-
       _cantidadController.clear();
       _mostrarNotificacionCentrada();
-
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text("Complete todos los campos"),
-          backgroundColor: Colors.orange,
-        ),
-      );
+          backgroundColor: Colors.orange));
     }
   }
 
-  void _guardarVenta() async {
+  void _guardarCompra() async {
     if (_items.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text("Agregue al menos un producto"),
-          backgroundColor: Colors.orange,
-        ),
-      );
+          backgroundColor: Colors.orange));
       return;
     }
 
     setState(() {
-      _guardandoVenta = true;
-      _ventaExitosa = false;
+      _guardandoCompra = true;
+      _compraExitosa = false;
     });
 
-    final venta = {
-      "clienteId": widget.cliente['clienteId'].toString(),
-      "empresaId": widget.cliente['empresaId'].toString(),
-      "fechaVenta": DateTime.now().toIso8601String(),
+    final compra = {
+      "proveedorId": widget.proveedor['proveedorId'].toString(),
+      "empresaId": widget.proveedor['empresaId'].toString(),
+      "fechaCompra": DateTime.now().toIso8601String(),
       "total": _total,
       "items": _items.map((item) {
         return {
           "productoId": item['productoId'],
           "cantidad": item['cantidad'],
           "precioUnitario": item['precio'],
-          "subtotal": item['subtotal']
+          "subtotal": item['subtotal'],
         };
       }).toList(),
     };
 
     try {
-      final apiVenta = ApiServiceVenta(client: IOClient(autoFirmadoTemporal()));
-      final respuesta = await apiVenta.crearVenta(venta);
-
+      final apiCompra = ApiServiceCompra(client: IOClient(autoFirmadoTemporal()));
+      final respuesta = await apiCompra.crearCompra(compra);
       setState(() {
-        _guardandoVenta = false;
-        _ventaExitosa = true;
-        _ventaId = respuesta['ventaId'];
+        _guardandoCompra = false;
+        _compraExitosa = true;
+        _compraId = respuesta['compraId'];
       });
-
     } catch (e) {
-      setState(() {
-        _guardandoVenta = false;
-      });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Error al guardar la venta: $e"),
-          backgroundColor: Colors.red,
-        ),
-      );
+      setState(() => _guardandoCompra = false);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text("Error al guardar la compra: $e"),
+          backgroundColor: Colors.red));
     }
   }
 
-  void _volverAInicio() {
-    Navigator.popUntil(context, (route) => route.isFirst);
-  }
+  void _volverAInicio() => Navigator.popUntil(context, (r) => r.isFirst);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Venta - ${widget.cliente['clienteNombre']}"),
-        backgroundColor: Colors.blue[700],
+        title: Text("Compra - ${widget.proveedor['proveedorNombre']}"),
+        backgroundColor: Colors.purple[700],
         foregroundColor: Colors.white,
       ),
       body: Stack(
         children: [
-          _guardandoVenta
+          _guardandoCompra
               ? _buildLoadingScreen()
-              : _ventaExitosa
+              : _compraExitosa
               ? _buildSuccessScreen()
-              : _buildVentaForm(),
-
-          // Notificación centrada
+              : _buildCompraForm(),
           if (_mostrarNotificacion)
             Center(
               child: Container(
                 padding: EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                 decoration: BoxDecoration(
-                  color: Colors.blue,
+                  color: Colors.purple[700],
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
@@ -217,14 +176,11 @@ class _VentaPageState extends State<VentaPage> {
                   children: [
                     Icon(Icons.check_circle, color: Colors.white, size: 24),
                     SizedBox(width: 12),
-                    Text(
-                      "✓ Producto agregado",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
+                    Text("✓ Producto agregado",
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500)),
                   ],
                 ),
               ),
@@ -240,13 +196,10 @@ class _VentaPageState extends State<VentaPage> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(Colors.blue[700]!),
-          ),
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.purple[700]!)),
           SizedBox(height: 20),
-          Text(
-              "Procesando venta...",
-              style: TextStyle(fontSize: 18, color: Colors.grey[700])
-          ),
+          Text("Procesando compra...",
+              style: TextStyle(fontSize: 18, color: Colors.grey[700])),
         ],
       ),
     );
@@ -260,15 +213,10 @@ class _VentaPageState extends State<VentaPage> {
         children: [
           Icon(Icons.check_circle, color: Colors.green, size: 80),
           SizedBox(height: 20),
-          Text(
-            "¡Venta Exitosa!",
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-          ),
+          Text("¡Compra Exitosa!",
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
           SizedBox(height: 10),
-          Text(
-              "ID de Venta: $_ventaId",
-              style: TextStyle(fontSize: 18)
-          ),
+          Text("ID de Compra: $_compraId", style: TextStyle(fontSize: 18)),
           SizedBox(height: 30),
           ElevatedButton.icon(
             onPressed: _volverAInicio,
@@ -285,46 +233,34 @@ class _VentaPageState extends State<VentaPage> {
     );
   }
 
-  Widget _buildVentaForm() {
+  Widget _buildCompraForm() {
     return Column(
       children: [
-        // Header informativo
         Container(
           padding: EdgeInsets.all(16),
           color: Colors.grey[50],
           child: Row(
             children: [
               CircleAvatar(
-                backgroundColor: Colors.blue[100],
-                child: Icon(Icons.person, color: Colors.blue[700], size: 20),
+                backgroundColor: Colors.purple[100],
+                child: Icon(Icons.business, color: Colors.purple[700], size: 20),
               ),
               SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      widget.cliente['clienteNombre'],
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 16,
-                      ),
-                    ),
-                    Text(
-                      widget.cliente['clienteIdentificacion'],
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey[600],
-                      ),
-                    ),
+                    Text(widget.proveedor['proveedorNombre'],
+                        style: TextStyle(
+                            fontWeight: FontWeight.w600, fontSize: 16)),
+                    Text(widget.proveedor['proveedorIdentificacion'],
+                        style: TextStyle(fontSize: 14, color: Colors.grey[600])),
                   ],
                 ),
               ),
             ],
           ),
         ),
-
-        // Formulario para agregar productos
         Padding(
           padding: EdgeInsets.all(16),
           child: Column(
@@ -336,15 +272,14 @@ class _VentaPageState extends State<VentaPage> {
                 decoration: InputDecoration(
                   labelText: "Producto",
                   border: OutlineInputBorder(),
-                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  contentPadding:
+                  EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 ),
                 items: _productos
                     .map((p) => DropdownMenuItem(
                   value: p,
-                  child: Text(
-                    "${p['nombre']}",
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                  child: Text("${p['nombre']}",
+                      overflow: TextOverflow.ellipsis),
                 ))
                     .toList(),
                 onChanged: (value) {
@@ -356,9 +291,7 @@ class _VentaPageState extends State<VentaPage> {
                   });
                 },
               ),
-
               SizedBox(height: 12),
-
               Row(
                 children: [
                   Expanded(
@@ -368,7 +301,8 @@ class _VentaPageState extends State<VentaPage> {
                       decoration: InputDecoration(
                         labelText: "Cantidad",
                         border: OutlineInputBorder(),
-                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                        contentPadding:
+                        EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                       ),
                     ),
                   ),
@@ -376,20 +310,20 @@ class _VentaPageState extends State<VentaPage> {
                   Expanded(
                     child: TextField(
                       controller: _precioController,
-                      keyboardType: TextInputType.numberWithOptions(decimal: true),
+                      keyboardType:
+                      TextInputType.numberWithOptions(decimal: true),
                       decoration: InputDecoration(
                         labelText: "Precio",
                         border: OutlineInputBorder(),
-                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                        contentPadding:
+                        EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                         prefixText: "\$ ",
                       ),
                     ),
                   ),
                 ],
               ),
-
               SizedBox(height: 16),
-
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
@@ -397,7 +331,7 @@ class _VentaPageState extends State<VentaPage> {
                   icon: Icon(Icons.add, size: 20),
                   label: Text("Agregar Producto"),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue[700],
+                    backgroundColor: Colors.purple[700],
                     foregroundColor: Colors.white,
                     padding: EdgeInsets.symmetric(vertical: 14),
                   ),
@@ -406,36 +340,20 @@ class _VentaPageState extends State<VentaPage> {
             ],
           ),
         ),
-
         Divider(height: 1),
-
-        // Lista de productos
         Expanded(
           child: _items.isEmpty
               ? Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
-                  Icons.shopping_cart_outlined,
-                  size: 64,
-                  color: Colors.grey[300],
-                ),
+                Icon(Icons.shopping_cart_outlined,
+                    size: 64, color: Colors.grey[300]),
                 SizedBox(height: 16),
-                Text(
-                  "No hay productos",
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.grey[600],
-                  ),
-                ),
-                Text(
-                  "Agregue productos a la venta",
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey[500],
-                  ),
-                ),
+                Text("No hay productos",
+                    style: TextStyle(fontSize: 16, color: Colors.grey[600])),
+                Text("Agregue productos a la compra",
+                    style: TextStyle(fontSize: 14, color: Colors.grey[500])),
               ],
             ),
           )
@@ -444,42 +362,30 @@ class _VentaPageState extends State<VentaPage> {
             itemBuilder: (context, index) {
               final item = _items[index];
               return ListTile(
-                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                contentPadding:
+                EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 leading: CircleAvatar(
-                  backgroundColor: Colors.blue[50],
-                  child: Text(
-                    "${item['cantidad']}",
-                    style: TextStyle(
-                      color: Colors.blue[700],
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  backgroundColor: Colors.purple[50],
+                  child: Text("${item['cantidad']}",
+                      style: TextStyle(
+                          color: Colors.purple[700],
+                          fontWeight: FontWeight.bold)),
                 ),
-                title: Text(
-                  item['producto'],
-                  style: TextStyle(fontWeight: FontWeight.w500),
-                ),
-                subtitle: Text(
-                  "\$${item['precio'].toStringAsFixed(2)} c/u",
-                ),
+                title: Text(item['producto'],
+                    style: TextStyle(fontWeight: FontWeight.w500)),
+                subtitle: Text("\$${item['precio'].toStringAsFixed(2)} c/u"),
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      "\$${item['subtotal'].toStringAsFixed(2)}",
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.blue[700],
-                      ),
-                    ),
+                    Text("\$${item['subtotal'].toStringAsFixed(2)}",
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.purple[700])),
                     SizedBox(width: 16),
                     IconButton(
                       icon: Icon(Icons.delete_outline, color: Colors.red),
-                      onPressed: () {
-                        setState(() {
-                          _items.removeAt(index);
-                        });
-                      },
+                      onPressed: () =>
+                          setState(() => _items.removeAt(index)),
                     ),
                   ],
                 ),
@@ -487,8 +393,6 @@ class _VentaPageState extends State<VentaPage> {
             },
           ),
         ),
-
-        // Total y botón de guardar
         if (_items.isNotEmpty) ...[
           Divider(height: 1),
           Container(
@@ -499,36 +403,26 @@ class _VentaPageState extends State<VentaPage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      "TOTAL:",
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    Text(
-                      "\$${_total.toStringAsFixed(2)}",
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.green[700],
-                      ),
-                    ),
+                    Text("TOTAL:",
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold)),
+                    Text("\$${_total.toStringAsFixed(2)}",
+                        style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.green[700])),
                   ],
                 ),
                 SizedBox(height: 16),
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: _guardarVenta,
-                    child: Text(
-                      "FINALIZAR VENTA",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
+                    onPressed: _guardarCompra,
+                    child: Text("FINALIZAR COMPRA",
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16)),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.green,
                       padding: EdgeInsets.symmetric(vertical: 16),

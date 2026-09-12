@@ -1,15 +1,15 @@
-import 'package:cangrivic/app/services/api_service_client.dart';
+import 'package:cangrivic/app/services/api_service_proveedor.dart';
 import 'package:flutter/material.dart';
 import 'package:http/io_client.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../services/auto_firmado_temporal.dart';
 
-class AddClientPage extends StatefulWidget {
+class AddProveedorPage extends StatefulWidget {
   @override
-  _AddClientPageState createState() => _AddClientPageState();
+  _AddProveedorPageState createState() => _AddProveedorPageState();
 }
 
-class _AddClientPageState extends State<AddClientPage> {
+class _AddProveedorPageState extends State<AddProveedorPage> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _nombreController = TextEditingController();
   final TextEditingController _identificacionController = TextEditingController();
@@ -17,34 +17,34 @@ class _AddClientPageState extends State<AddClientPage> {
   final TextEditingController _correoController = TextEditingController();
   final TextEditingController _direccionController = TextEditingController();
 
-  bool _guardandoCliente = false;
-  bool _clienteGuardado = false;
-  Map<String, dynamic>? _clienteCreado;
+  bool _guardandoProveedor = false;
+  bool _proveedorGuardado = false;
+  Map<String, dynamic>? _proveedorCreado;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Agregar Nuevo Cliente",
+        title: Text("Agregar Nuevo Proveedor",
             style: TextStyle(fontWeight: FontWeight.w600)),
-        backgroundColor: Colors.blue[700],
+        backgroundColor: Colors.purple[700],
         elevation: 0,
         flexibleSpace: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [Colors.blue[700]!, Colors.blue[800]!],
+              colors: [Colors.purple[700]!, Colors.purple[800]!],
             ),
           ),
         ),
         centerTitle: true,
       ),
-      body: _guardandoCliente
+      body: _guardandoProveedor
           ? _buildLoadingScreen()
-          : _clienteGuardado
+          : _proveedorGuardado
           ? _buildSuccessScreen()
-          : _buildClientForm(),
+          : _buildForm(),
     );
   }
 
@@ -54,11 +54,11 @@ class _AddClientPageState extends State<AddClientPage> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(Colors.blue[700]!),
+            valueColor: AlwaysStoppedAnimation<Color>(Colors.purple[700]!),
             strokeWidth: 3,
           ),
           SizedBox(height: 20),
-          Text("Guardando cliente...",
+          Text("Guardando proveedor...",
               style: TextStyle(fontSize: 18, color: Colors.grey[700])),
         ],
       ),
@@ -72,7 +72,7 @@ class _AddClientPageState extends State<AddClientPage> {
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [Colors.blue[50]!, Colors.white],
+          colors: [Colors.purple[50]!, Colors.white],
         ),
       ),
       child: Column(
@@ -80,7 +80,7 @@ class _AddClientPageState extends State<AddClientPage> {
         children: [
           Icon(Icons.check_circle, color: Colors.green, size: 80),
           SizedBox(height: 24),
-          Text("¡Cliente Creado Exitosamente!",
+          Text("¡Proveedor Creado Exitosamente!",
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
@@ -98,19 +98,17 @@ class _AddClientPageState extends State<AddClientPage> {
             ),
             child: Column(
               children: [
-                _buildInfoRow("ID:", _clienteCreado?['clienteId'].toString()),
+                _buildInfoRow("ID:", _proveedorCreado?['proveedorId'].toString()),
                 SizedBox(height: 12),
-                _buildInfoRow("Nombre:", _clienteCreado?['clienteNombre']),
+                _buildInfoRow("Nombre:", _proveedorCreado?['proveedorNombre']),
                 SizedBox(height: 12),
-                _buildInfoRow("Correo:", _clienteCreado?['clienteCorreo']),
+                _buildInfoRow("Correo:", _proveedorCreado?['proveedorCorreo']),
               ],
             ),
           ),
           SizedBox(height: 32),
           ElevatedButton.icon(
-            onPressed: () {
-              Navigator.popUntil(context, (route) => route.isFirst);
-            },
+            onPressed: () => Navigator.popUntil(context, (r) => r.isFirst),
             icon: Icon(Icons.home, size: 20),
             label: Text("Volver al Inicio",
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
@@ -132,140 +130,102 @@ class _AddClientPageState extends State<AddClientPage> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-        ),
+        Text(label, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
         SizedBox(width: 10),
-        Expanded(
-          child: Text(
-            value ?? 'N/A',
-            style: TextStyle(fontSize: 16),
-          ),
-        ),
+        Expanded(child: Text(value ?? 'N/A', style: TextStyle(fontSize: 16))),
       ],
     );
   }
 
-  Widget _buildClientForm() {
+  Widget _buildForm() {
     return SingleChildScrollView(
       padding: EdgeInsets.all(20),
       child: Form(
         key: _formKey,
         child: Column(
           children: [
-            // Header informativo
             Container(
               padding: EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.blue[50],
+                color: Colors.purple[50],
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.blue[100]!),
+                border: Border.all(color: Colors.purple[100]!),
               ),
               child: Row(
                 children: [
-                  Icon(Icons.info_outline, color: Colors.blue[700], size: 22),
+                  Icon(Icons.info_outline, color: Colors.purple[700], size: 22),
                   SizedBox(width: 12),
                   Expanded(
                     child: Text(
                       "Todos los campos son obligatorios",
-                      style: TextStyle(
-                        color: Colors.blue[700],
-                        fontSize: 14,
-                      ),
+                      style: TextStyle(color: Colors.purple[700], fontSize: 14),
                     ),
                   ),
                 ],
               ),
             ),
             SizedBox(height: 24),
-
-            // Campo Nombres
             _buildTextField(
               controller: _nombreController,
               label: "Nombres",
-              icon: Icons.person_outline,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Por favor ingrese los nombres';
-                }
-                return null;
-              },
+              icon: Icons.business,
+              validator: (v) => (v == null || v.isEmpty)
+                  ? 'Por favor ingrese los nombres'
+                  : null,
             ),
             SizedBox(height: 16),
-
-            // Campo Identificación/RUC
             _buildTextField(
               controller: _identificacionController,
               label: "Identificación/RUC",
               icon: Icons.badge_outlined,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Por favor ingrese la identificación';
-                }
-                return null;
-              },
+              validator: (v) => (v == null || v.isEmpty)
+                  ? 'Por favor ingrese la identificación'
+                  : null,
             ),
             SizedBox(height: 16),
-
-            // Campo Teléfono
             _buildTextField(
               controller: _telefonoController,
               label: "Teléfono",
               icon: Icons.phone_outlined,
               keyboardType: TextInputType.phone,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Por favor ingrese el teléfono';
-                }
-                return null;
-              },
+              validator: (v) => (v == null || v.isEmpty)
+                  ? 'Por favor ingrese el teléfono'
+                  : null,
             ),
             SizedBox(height: 16),
-
-            // Campo Correo (ahora obligatorio)
             _buildTextField(
               controller: _correoController,
               label: "Correo Electrónico",
               icon: Icons.email_outlined,
               keyboardType: TextInputType.emailAddress,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
+              validator: (v) {
+                if (v == null || v.isEmpty) {
                   return 'Por favor ingrese el correo electrónico';
                 }
-                if (!value.contains('@')) {
-                  return 'Ingrese un correo electrónico válido';
-                }
+                if (!v.contains('@')) return 'Ingrese un correo válido';
                 return null;
               },
             ),
             SizedBox(height: 16),
-
-            // Campo Dirección
             _buildTextField(
               controller: _direccionController,
               label: "Dirección",
               icon: Icons.location_on_outlined,
               maxLines: 2,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Por favor ingrese la dirección';
-                }
-                return null;
-              },
+              validator: (v) => (v == null || v.isEmpty)
+                  ? 'Por favor ingrese la dirección'
+                  : null,
             ),
             SizedBox(height: 32),
-
-            // Botón Guardar
             Container(
               width: double.infinity,
               height: 54,
               child: ElevatedButton(
-                onPressed: _guardarCliente,
-                child: Text("Guardar Cliente",
+                onPressed: _guardarProveedor,
+                child: Text("Guardar Proveedor",
                     style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600)),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue[700],
+                  backgroundColor: Colors.purple[700],
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -303,7 +263,7 @@ class _AddClientPageState extends State<AddClientPage> {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: Colors.blue[700]!, width: 1.5),
+          borderSide: BorderSide(color: Colors.purple[700]!, width: 1.5),
         ),
         prefixIcon: Icon(icon, color: Colors.grey[600]),
         filled: true,
@@ -315,44 +275,37 @@ class _AddClientPageState extends State<AddClientPage> {
     );
   }
 
-  Future<void> _guardarCliente() async {
+  Future<void> _guardarProveedor() async {
     if (_formKey.currentState!.validate()) {
-      setState(() {
-        _guardandoCliente = true;
-      });
+      setState(() => _guardandoProveedor = true);
 
       try {
-        // Obtener empresaId de SharedPreferences
         final prefs = await SharedPreferences.getInstance();
         final empresaId = prefs.getInt('empresaId') ?? 0;
 
-        final clienteData = {
-          "clienteNombre": _nombreController.text,
-          "clienteIdentificacion": _identificacionController.text,
-          "clienteCorreo": _correoController.text,
-          "clienteTelefono": _telefonoController.text,
-          "clienteDireccion": _direccionController.text,
-          "clienteDisabled": false,
+        final proveedorData = {
+          "proveedorNombre": _nombreController.text,
+          "proveedorIdentificacion": _identificacionController.text,
+          "proveedorCorreo": _correoController.text,
+          "proveedorTelefono": _telefonoController.text,
+          "proveedorDireccion": _direccionController.text,
+          "proveedorDisabled": false,
           "empresaId": empresaId,
         };
 
-        final apiClient = ApiServiceClient(client: IOClient(autoFirmadoTemporal()));
-        final respuesta = await apiClient.crearCliente(clienteData);
+        final api = ApiServiceProveedor(client: IOClient(autoFirmadoTemporal()));
+        final respuesta = await api.crearProveedor(proveedorData);
 
         setState(() {
-          _guardandoCliente = false;
-          _clienteGuardado = true;
-          _clienteCreado = respuesta;
+          _guardandoProveedor = false;
+          _proveedorGuardado = true;
+          _proveedorCreado = respuesta;
         });
-
       } catch (e) {
-        setState(() {
-          _guardandoCliente = false;
-        });
-
+        setState(() => _guardandoProveedor = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text("Error al guardar cliente: $e"),
+            content: Text("Error al guardar proveedor: $e"),
             backgroundColor: Colors.red,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
